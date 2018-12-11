@@ -37,7 +37,7 @@ class HTTPClient(Exploit):
             url = "http://"
 
         url += "{}:{}{}".format(self.target, self.port, path)
-        print(url)
+
         kwargs.setdefault("timeout", HTTP_TIMEOUT)
         kwargs.setdefault("verify", False)
         kwargs.setdefault("allow_redirects", False)
