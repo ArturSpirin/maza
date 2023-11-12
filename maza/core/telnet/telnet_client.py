@@ -6,7 +6,6 @@ from maza.core.exploit.option import OptBool
 from maza.core.exploit.printer import print_success
 from maza.core.exploit.printer import print_error
 
-
 TELNET_TIMEOUT = 30.0
 
 
@@ -26,7 +25,7 @@ class TelnetCli(object):
         self.telnet_port = telnet_port
         self.verbosity = verbosity
 
-        self.peer = "{}:{}".format(self.telnet_target, self.telnet_port)
+        self.peer = f"{self.telnet_target}:{self.telnet_port}"
 
         self.telnet_client = None
 
@@ -66,11 +65,23 @@ class TelnetCli(object):
 
                 (i, obj, res) = self.telnet_client.expect([b"Incorrect", b"incorrect"], 5)
 
-                if i == -1 and any([x in res for x in [b"#", b"$", b">"]]) or len(res) > 500:  # big banner e.g. mikrotik
-                    print_success(self.peer, "Telnet Authentication Successful - Username: '{}' Password: '{}'".format(username, password), verbose=self.verbosity)
+                if (
+                    i == -1
+                    and any(x in res for x in [b"#", b"$", b">"])
+                    or len(res) > 500
+                ):  # big banner e.g. mikrotik
+                    print_success(
+                        self.peer,
+                        f"Telnet Authentication Successful - Username: '{username}' Password: '{password}'",
+                        verbose=self.verbosity,
+                    )
                     return True
                 else:
-                    print_error(self.peer, "Telnet Authentication Failed - Username: '{}' Password: '{}'".format(username, password), verbose=self.verbosity)
+                    print_error(
+                        self.peer,
+                        f"Telnet Authentication Failed - Username: '{username}' Password: '{password}'",
+                        verbose=self.verbosity,
+                    )
                     break
             except Exception as err:
                 print_error(self.peer, "Telnet Error while authenticating to the server", err, verbose=self.verbosity)
@@ -110,8 +121,7 @@ class TelnetCli(object):
         """
 
         try:
-            response = self.telnet_client.read_until(data, 5)
-            return response
+            return self.telnet_client.read_until(data, 5)
         except Exception as err:
             print_error(self.peer, "Telnet Error while reading data from the server", err, verbose=self.verbosity)
 
@@ -162,8 +172,7 @@ class TelnetClient(Exploit):
         :return TelnetCli: Telnet client object
         """
 
-        telnet_target = target if target else self.target
-        telnet_port = port if port else self.port
+        telnet_target = target or self.target
+        telnet_port = port or self.port
 
-        telnet_client = TelnetCli(telnet_target, telnet_port, verbosity=self.verbosity)
-        return telnet_client
+        return TelnetCli(telnet_target, telnet_port, verbosity=self.verbosity)

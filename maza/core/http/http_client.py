@@ -7,7 +7,6 @@ from maza.core.exploit.exploit import Protocol
 from maza.core.exploit.option import OptBool
 from maza.core.exploit.printer import print_error
 
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 HTTP_TIMEOUT = 30.0
@@ -31,13 +30,9 @@ class HTTPClient(Exploit):
         :return Response: Response object
         """
 
-        if self.ssl:
-            url = "https://"
-        else:
-            url = "http://"
-
-        url += "{}:{}{}".format(self.target, self.port, path)
-
+        url = (
+                  "https://" if self.ssl else "http://"
+              ) + f"{self.target}:{self.port}{path}"
         kwargs.setdefault("timeout", HTTP_TIMEOUT)
         kwargs.setdefault("verify", False)
         kwargs.setdefault("allow_redirects", False)
@@ -45,9 +40,9 @@ class HTTPClient(Exploit):
         try:
             return getattr(session, method.lower())(url, **kwargs)
         except (requests.exceptions.MissingSchema, requests.exceptions.InvalidSchema):
-            print_error("Invalid URL format: {}".format(url), verbose=self.verbosity)
+            print_error(f"Invalid URL format: {url}", verbose=self.verbosity)
         except requests.exceptions.ConnectionError:
-            print_error("Connection error: {}".format(url), verbose=self.verbosity)
+            print_error(f"Connection error: {url}", verbose=self.verbosity)
         except requests.RequestException as error:
             print_error(error, verbose=self.verbosity)
         except socket.error as err:
@@ -64,14 +59,9 @@ class HTTPClient(Exploit):
         :return str: full target url with correct schema
         """
 
-        if self.ssl:
-            url = "https://"
-        else:
-            url = "http://"
-
-        url += "{}:{}{}".format(self.target, self.port, path)
-
-        return url
+        return (
+            "https://" if self.ssl else "http://"
+        ) + f"{self.target}:{self.port}{path}"
 
     def http_test_connect(self) -> bool:
         """ Test connection to HTTP server
@@ -79,12 +69,4 @@ class HTTPClient(Exploit):
         :return bool: True if test connection was successful, False otherwise
         """
 
-        response = self.http_request(
-            method="GET",
-            path="/"
-        )
-
-        if response:
-            return True
-
-        return False
+        return bool(response := self.http_request(method="GET", path="/"))
