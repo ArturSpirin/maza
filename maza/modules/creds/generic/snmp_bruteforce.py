@@ -70,7 +70,4 @@ class Exploit(SNMPClient):
         data = LockedIterator(self.defaults)
         self.run_threads(self.threads, self.target_function, data)
 
-        if self.strings:
-            return self.strings
-
-        return None
+        return self.strings or None

@@ -1,3 +1,4 @@
+import contextlib
 import socket
 import paramiko
 import os
@@ -12,7 +13,6 @@ from maza.core.exploit.option import OptBool
 from maza.core.exploit.printer import print_success
 from maza.core.exploit.printer import print_error
 from maza.core.exploit.utils import random_text
-
 
 SSH_TIMEOUT = 8.0
 
@@ -33,7 +33,7 @@ class SSHCli(object):
         self.ssh_port = ssh_port
         self.verbosity = verbosity
 
-        self.peer = "{}:{}".format(self.ssh_target, self.ssh_port)
+        self.peer = f"{self.ssh_target}:{self.ssh_port}"
 
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -49,15 +49,24 @@ class SSHCli(object):
 
         for _ in range(retries):
             try:
-                self.ssh_client.connect(self.ssh_target, self.ssh_port, timeout=SSH_TIMEOUT, banner_timeout=SSH_TIMEOUT, username=username, password=password, look_for_keys=False)
+                self.ssh_client.connect(self.ssh_target, self.ssh_port, timeout=SSH_TIMEOUT, banner_timeout=SSH_TIMEOUT,
+                                        username=username, password=password, look_for_keys=False)
             except paramiko.AuthenticationException:
-                print_error(self.peer, "SSH Authentication Failed - Username: '{}' Password: '{}'".format(username, password), verbose=self.verbosity)
+                print_error(
+                    self.peer,
+                    f"SSH Authentication Failed - Username: '{username}' Password: '{password}'",
+                    verbose=self.verbosity,
+                )
                 self.ssh_client.close()
                 break
             except Exception as err:
                 print_error(self.peer, "SSH Error while authenticating", err, verbose=self.verbosity)
             else:
-                print_success(self.peer, "SSH Authentication Successful - Username: '{}' Password: '{}'".format(username, password), verbose=self.verbosity)
+                print_success(
+                    self.peer,
+                    f"SSH Authentication Successful - Username: '{username}' Password: '{password}'",
+                    verbose=self.verbosity,
+                )
                 return True
 
             self.ssh_client.close()
@@ -82,13 +91,23 @@ class SSHCli(object):
 
         for _ in range(retries):
             try:
-                self.ssh_client.connect(self.ssh_target, self.ssh_port, timeout=SSH_TIMEOUT, banner_timeout=SSH_TIMEOUT, username=username, pkey=priv_key, look_for_keys=False)
+                self.ssh_client.connect(self.ssh_target, self.ssh_port, timeout=SSH_TIMEOUT, banner_timeout=SSH_TIMEOUT,
+                                        username=username, pkey=priv_key, look_for_keys=False)
             except paramiko.AuthenticationException:
-                print_error(self.peer, "SSH Authentication Failed - Username: '{}' auth with private key".format(username), verbose=self.verbosity)
+                print_error(
+                    self.peer,
+                    f"SSH Authentication Failed - Username: '{username}' auth with private key",
+                    verbose=self.verbosity,
+                )
             except Exception as err:
-                print_error(self.peer, "SSH Error while authenticated by using private key", err, verbose=self.verbosity)
+                print_error(self.peer, "SSH Error while authenticated by using private key", err,
+                            verbose=self.verbosity)
             else:
-                print_success(self.peer, "SSH Authentication Successful - Username: '{}' with private key".format(username), verbose=self.verbosity)
+                print_success(
+                    self.peer,
+                    f"SSH Authentication Successful - Username: '{username}' with private key",
+                    verbose=self.verbosity,
+                )
                 return True
 
             self.ssh_client.close()
@@ -102,7 +121,8 @@ class SSHCli(object):
         """
 
         try:
-            self.ssh_client.connect(self.ssh_target, self.ssh_port, timeout=SSH_TIMEOUT, username="root", password=random_text(12), look_for_keys=False)
+            self.ssh_client.connect(self.ssh_target, self.ssh_port, timeout=SSH_TIMEOUT, username="root",
+                                    password=random_text(12), look_for_keys=False)
         except paramiko.AuthenticationException:
             self.ssh_client.close()
             return True
@@ -159,7 +179,8 @@ class SSHCli(object):
 
             return fp_content.getvalue()
         except Exception as err:
-            print_error(self.peer, "SSH Error while retrieving file content from the server", err, verbose=self.verbosity)
+            print_error(self.peer, "SSH Error while retrieving file content from the server", err,
+                        verbose=self.verbosity)
 
         return None
 
@@ -229,16 +250,13 @@ class SSHCli(object):
             while True:
                 r, w, e = select.select([chan, sys.stdin], [], [])
                 if chan in r:
-                    try:
+                    with contextlib.suppress(socket.timeout):
                         x = str(chan.recv(1024), "utf-8")
-                        if len(x) == 0:
+                        if not x:
                             break
 
                         sys.stdout.write(x)
                         sys.stdout.flush()
-                    except socket.timeout:
-                        pass
-
                 if sys.stdin in r:
                     x = sys.stdin.read(1)
                     if len(x) == 0:
@@ -309,8 +327,7 @@ class SSHClient(Exploit):
         :return SSHCli: SSH client object
         """
 
-        ssh_target = target if target else self.target
-        ssh_port = port if port else self.port
+        ssh_target = target or self.target
+        ssh_port = port or self.port
 
-        ssh_client = SSHCli(ssh_target, ssh_port, verbosity=self.verbosity)
-        return ssh_client
+        return SSHCli(ssh_target, ssh_port, verbosity=self.verbosity)

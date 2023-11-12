@@ -19,7 +19,8 @@ class Exploit(HTTPClient):
     port = OptPort(80, "Target HTTP port")
 
     threads = OptInteger(1, "Number of threads")
-    defaults = OptWordlist("admin:12345,admin:123456,Admin:12345,Admin:123456", "User:Pass or file with default ccredentials (file://)")
+    defaults = OptWordlist("admin:12345,admin:123456,Admin:12345,Admin:123456",
+                           "User:Pass or file with default ccredentials (file://)")
     stop_on_success = OptBool(True, "Stop on first valid authentication attempt")
     verbosity = OptBool(True, "Display authentication attempts")
 

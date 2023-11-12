@@ -9,13 +9,13 @@ import socket
 from optparse import OptionParser
 
 from netaddr import IPAddress, IPNetwork
+
 sys.path.insert(1, "E:\Development\maza")
 import maza.modules as modules
 from maza.core.exploit.utils import pythonize_path
 
 
 class Utility:
-
     __THREADS = []
 
     @staticmethod
@@ -23,6 +23,7 @@ class Utility:
         """
         Utility function to run operations in a thread but honors the thread limit
         """
+
         def get_active_threads():
             active = 0
             for t in Utility.__THREADS:
@@ -48,8 +49,7 @@ class Utility:
     def modulize_exploit_path(path):
 
         path = path.split("maza")[-1]
-        module = "maza" + pythonize_path(path).replace(".py", "")
-        return module
+        return "maza" + pythonize_path(path).replace(".py", "")
 
 
 class NetworkScanner:
@@ -68,7 +68,7 @@ class NetworkScanner:
         """
         try:
             socket.inet_aton(ip)
-        except:
+        except Exception:
             return False
         return True
 
@@ -88,12 +88,11 @@ class NetworkScanner:
                 for item in interface_data:
                     if item.get("netmask", None) is not None and \
                             item.get("addr", None) is not None and \
-                            self.is_legal_ip(item["netmask"]):
-                        if item.get("addr") not in ["127.0.0.1", "0.0.0.0"]:
-                            network = "{ip}/{cird}".format(ip=item["addr"],
-                                                           cird=IPAddress(item["netmask"]).netmask_bits())
-                            if network not in networks:
-                                networks.append(network)
+                            self.is_legal_ip(item["netmask"]) and item.get("addr") not in ["127.0.0.1", "0.0.0.0"]:
+                        network = "{ip}/{cird}".format(ip=item["addr"],
+                                                       cird=IPAddress(item["netmask"]).netmask_bits())
+                        if network not in networks:
+                            networks.append(network)
         return networks
 
     def __get_potential_targets(self):
@@ -104,11 +103,9 @@ class NetworkScanner:
         network_targets = {}
         for network in self.__get_scanning_range():
             ips = IPNetwork(network)  # converts CIRD notation to IP addresses
-            targets = []
-            for ip in ips:
-                targets.append(ip)
-            print("Potential targets on {} network: {}".format(network, len(targets)))
-            network_targets.update({network: targets})
+            targets = list(ips)
+            print(f"Potential targets on {network} network: {len(targets)}")
+            network_targets[network] = targets
         return network_targets
 
     def __scan_for_open_ports(self, ip, ports_to_scan):
@@ -135,7 +132,7 @@ class NetworkScanner:
                 print("Couldn't connect to server: {}".format(ip))
 
         for port in ports_to_scan:
-            Utility.run_in_a_thread(run_scan, (port, ), self.__thread_limit)
+            Utility.run_in_a_thread(run_scan, (port,), self.__thread_limit)
 
     def get_targets(self, ports_to_scan):
         """
@@ -148,7 +145,7 @@ class NetworkScanner:
         for port in ports_to_scan:
             self.targets.update({port: []})
 
-        print("Port scan in progress for the following open ports: {}".format(ports_to_scan))
+        print(f"Port scan in progress for the following open ports: {ports_to_scan}")
         for network, ips in network_ips.items():
             for ip in ips:
                 Utility.run_in_a_thread(self.__scan_for_open_ports, (ip, ports_to_scan), self.__thread_limit)
@@ -185,7 +182,7 @@ class VulnerabilityScanner:
         files = os.listdir(path)
         for file in files:
             if file != "__init__.py" and ".pyc" not in file:
-                doc_path = "{}{}{}".format(path, os.sep, file)
+                doc_path = f"{path}{os.sep}{file}"
                 if os.path.isfile(doc_path):
                     with open(doc_path, "r") as doc:
                         lines = doc.readlines()
@@ -208,8 +205,7 @@ class VulnerabilityScanner:
         :return: Exploit object
         """
         m = __import__(module_name, globals(), locals(), class_name)
-        c = getattr(m, class_name)
-        return c
+        return getattr(m, class_name)
 
     @staticmethod
     def run_exploit(_exploit, _ip, _port):
@@ -219,25 +215,24 @@ class VulnerabilityScanner:
             if getattr(_exploit, "check_default", None) is not None:
                 result = _exploit.check_default()
                 if result is None:
-                    print("[N/A] Cannot asses if target: {}:{} is vulnerable to: {}.".format(_ip, _port, _exploit))
+                    print(
+                        f"[N/A] Cannot asses if target: {_ip}:{_port} is vulnerable to: {_exploit}."
+                    )
                 elif result:
-                    print("[OK] Target: {}:{} is vulnerable to: {}. Credentials: {}"
-                          .format(_ip, _port, _exploit, result))
-                else:
-                    # print("[X] Target: {}:{} is not vulnerable to: {}.".format(_ip, _port, _exploit))
-                    pass
+                    print(
+                        f"[OK] Target: {_ip}:{_port} is vulnerable to: {_exploit}. Credentials: {result}"
+                    )
             else:
                 result = _exploit.check()
                 if result is True:
-                    print("[OK] Target: {}:{} is vulnerable to: {}".format(_ip, _port, _exploit))
-                elif result is False:
-                    # print("[X] Target: {}:{} is not vulnerable to: {}".format(_ip, _port, _exploit))
-                    pass
-                else:
-                    print("[N/A] Cannot asses if target: {}:{} is vulnerable to: {}".format(_ip, _port, _exploit))
+                    print(f"[OK] Target: {_ip}:{_port} is vulnerable to: {_exploit}")
+                elif result is not False:
+                    print(
+                        f"[N/A] Cannot asses if target: {_ip}:{_port} is vulnerable to: {_exploit}"
+                    )
         except Exception:
             print(sys.exc_info())
-            print("Failed to create Exploit: {}".format(_exploit))
+            print(f"Failed to create Exploit: {_exploit}")
 
 
 if "__main__" == __name__:
